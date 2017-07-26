@@ -12,12 +12,23 @@
 #define setBackColor(n) printf("\033[4%dm",(n))
 #define BLACK 0
 #define RED 1
+#define GREEN 2
+#define YELLOW 3
+#define BLUE 4
+#define MAGENTA 5
+#define CYAN 6
 #define WHITE 7
 #define DEFAULT 9
 
 #define setAttribute(n) printf("\033[%dm",(n))
 #define NORMAL 0
+#define BLIGHT 1
+#define DIM 2
+#define UNDERBAR 4
+#define BLINK 5
 #define REVERSE 7
+#define HIDE 8
+#define STRIKE 9
 
 typedef struct cell {
     char c;
@@ -155,19 +166,22 @@ void reset(void);
 int checkRange(Cell a, int x, int y);
 int printCell(Cell c, int x, int y);
 int clearCell(Cell c, int x, int y);
-
+void copyBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE]);
+int printBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
+int clearBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
 
 int main(int argc, char *argv[])
 {
-    int y;
-    Cell a = {' ', WHITE, BLACK, REVERSE};
+    int i;
+    Cell block[BLOCK_SIZE][BLOCK_SIZE];
+    copyBlock(block_type[1], block);
     initialize();
 
-    for (y=1; y<HEIGHT; y++)
+    for (i=0; i<HEIGHT; i++)
     {
-        printCell(a, 5, y);
+        printBlock(block, 5, i);
         wait(250);
-        clearCell(a, 5, y);
+        clearBlock(block, 5, i);
 
     }
     reset();
@@ -232,3 +246,29 @@ int clearCell(Cell c, int x, int y)
     return 0;
 }
 
+
+void copyBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE])
+{
+    int i, j;
+    for (j=0; j<BLOCK_NUM; j++)
+        for (i=0; i<BLOCK_NUM; i++)
+            dst[j][i]=src[j][i];
+}
+
+int printBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y)
+{
+    int i, j;
+    for (j = 0; j < BLOCK_SIZE; j++)
+        for (i = 0; i < BLOCK_SIZE; i++)
+            printCell(block[j][i], i+x, j+y);
+    return 0;
+}
+
+int clearBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y)
+{
+    int i, j;
+    for (j = 0; j <BLOCK_SIZE; j++)
+        for (i = 0; i < BLOCK_SIZE; i++)
+            clearCell(block[j][i], i+x, j+y);
+    return 0;
+}
