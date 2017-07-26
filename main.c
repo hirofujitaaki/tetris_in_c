@@ -15,36 +15,159 @@
 #define WHITE 7
 #define DEFAULT 9
 
-
 #define setAttribute(n) printf("\033[%dm",(n))
 #define NORMAL 0
 #define REVERSE 7
 
-typedef struct _square {
+typedef struct cell {
     char c;
     int charcolor;
     int backcolor;
     int attribute;
-} Square;
+} Cell;
+
+#define BLOCK_SIZE 4
+#define BLOCK_NUM 7
+Cell block_type[BLOCK_NUM][BLOCK_SIZE][BLOCK_SIZE] = {
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  ' ', RED, RED, REVERSE,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  ' ', RED, RED, REVERSE,
+  ' ', RED, RED, REVERSE,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  ' ', RED, RED, REVERSE,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+  '\0', RED, BLACK, NORMAL,
+
+  '\0', BLUE, BLACK, NORMAL,
+  ' ', BLUE, BLACK, REVERSE,
+  ' ', BLUE, BLACK, REVERSE,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  ' ', BLUE, BLACK, REVERSE,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  ' ', BLUE, BLACK, REVERSE,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+  '\0', BLUE, BLACK, NORMAL,
+
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  ' ', GREEN, BLACK, REVERSE,
+  ' ', GREEN, BLACK, REVERSE,
+  '\0', GREEN, BLACK, NORMAL,
+  ' ', GREEN, BLACK, REVERSE,
+  ' ', GREEN, BLACK, REVERSE,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+  '\0', GREEN, BLACK, NORMAL,
+
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  ' ', YELLOW, BLACK, REVERSE,
+  ' ', YELLOW, BLACK, REVERSE,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  ' ', YELLOW, BLACK, REVERSE,
+  ' ', YELLOW, BLACK, REVERSE,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+  '\0', YELLOW, BLACK, NORMAL,
+
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  ' ', CYAN, BLACK, REVERSE,
+  ' ', CYAN, BLACK, REVERSE,
+  ' ', CYAN, BLACK, REVERSE,
+  ' ', CYAN, BLACK, REVERSE,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+  '\0', CYAN, BLACK, NORMAL,
+
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  ' ', MAGENTA, BLACK, REVERSE,
+  ' ', MAGENTA, BLACK, REVERSE,
+  ' ', MAGENTA, BLACK, REVERSE,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  ' ', MAGENTA, BLACK, REVERSE,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+  '\0', MAGENTA, BLACK, NORMAL,
+
+  '\0', WHITE, BLACK, NORMAL,
+  ' ', WHITE, BLACK, REVERSE,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  ' ', WHITE, BLACK, REVERSE,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  ' ', WHITE, BLACK, REVERSE,
+  ' ', WHITE, BLACK, REVERSE,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+  '\0', WHITE, BLACK, NORMAL,
+};
 
 int wait(int msec);
 void initialize(void);
 void reset(void);
-int checkRange(Square squ, int x, int y);
-int printSquare(Square squ, int x, int y);
-int clearSquare(Square squ, int x, int y);
+int checkRange(Cell a, int x, int y);
+int printCell(Cell c, int x, int y);
+int clearCell(Cell c, int x, int y);
+
 
 int main(int argc, char *argv[])
 {
     int y;
-    Square squ = {' ', WHITE, BLACK, REVERSE};
+    Cell a = {' ', WHITE, BLACK, REVERSE};
     initialize();
 
     for (y=1; y<HEIGHT; y++)
     {
-        printSquare(squ, 5, y);
+        printCell(a, 5, y);
         wait(250);
-        clearSquare(squ, 5, y);
+        clearCell(a, 5, y);
 
     }
     reset();
@@ -75,28 +198,28 @@ void reset(void)
     cursolOn();
 }
 
-int checkRange(Square squ, int x, int y)
+int checkRange(Cell a, int x, int y)
 {
-    if(squ.c=='\0' || x<0 || y<0 || x>=WIDTH || y>=HEIGHT )
+    if(a.c=='\0' || x<0 || y<0 || x>=WIDTH || y>=HEIGHT )
         return -1;  // False
     else
         return 0; // True
 }
 
-int printSquare(Square squ, int x, int y)
+int printCell(Cell c, int x, int y)
 {
-    if(checkRange(squ, x, y) == -1)
+    if(checkRange(c, x, y) == -1)
         return -1;
     setPosition(x, y);
-    setAttribute(squ.attribute);
-    setBackColor(squ.backcolor);
-    setCharColor(squ.charcolor);
-    printf("%c%c", squ.c, squ.c);
+    setAttribute(c.attribute);
+    setBackColor(c.backcolor);
+    setCharColor(c.charcolor);
+    printf("%c%c", c.c, c.c);
     fflush(stdout);
     return 0;
 }
 
-int clearSquare(Square c, int x, int y)
+int clearCell(Cell c, int x, int y)
 {
     if(checkRange(c, x, y) == -1)
         return -1;
@@ -108,3 +231,4 @@ int clearSquare(Square c, int x, int y)
     fflush(stdout);
     return 0;
 }
+
