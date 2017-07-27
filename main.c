@@ -181,6 +181,7 @@ int clearCell(Cell c, int x, int y);
 void copyBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE]);
 int printBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
 int clearBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
+void rotateBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE]);
 
 int kbhit(void);
 int getch(void);
@@ -190,7 +191,7 @@ int tinit(void);
 int main(int argc, char *argv[])
 {
     int x, y, c, prex, prey;
-    Cell block[BLOCK_SIZE][BLOCK_SIZE];
+    Cell block[BLOCK_SIZE][BLOCK_SIZE], block_tmp[BLOCK_SIZE][BLOCK_SIZE];
     struct timeval start_time, now_time, pre_time;
     double duration, thold;
 
@@ -221,6 +222,10 @@ int main(int argc, char *argv[])
                     switch(c)
                     {
                         case 0x41:  //UP
+                            rotateBlock(block, block_tmp);
+                            clearBlock(block, x, y);  //clear the previous
+                            printBlock(block_tmp, x, y);  //display the rotated block
+                            copyBlock(block_tmp, block);  //over-wirte the previous position
                             break;
                         case 0x42:  //DOWN
                             break;
@@ -398,4 +403,12 @@ int tinit(void)
   signal(SIGTERM, onsignal);
   signal(SIGHUP, onsignal);
   return 0;
+}
+
+void rotateBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE])
+{
+    int i, j;
+    for (j=0; j<BLOCK_SIZE; j++)
+        for (i=0; i<BLOCK_SIZE; i++)
+            dst[i][BLOCK_SIZE-1 - j] = src[j][i];
 }
