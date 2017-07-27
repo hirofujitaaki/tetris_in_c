@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -188,14 +189,25 @@ int tinit(void);
 
 int main(int argc, char *argv[])
 {
-    int x,y,c,count;
-    Cell block[BLOCK_SIZE][BLOCK_SIZE]; copyBlock(block_type[1],block);
+    int x, y, c, prex, prey;
+    Cell block[BLOCK_SIZE][BLOCK_SIZE];
+    struct timeval start_time, now_time, pre_time;
+    double duration, thold;
+
+    copyBlock(block_type[1], block);
     initialize();
     x=5;
-    y=10;
-    printBlock(block,x,y); //初期表示
-    for( count=0; count<10 ; ) //とりあえず 10 操作したら終了
+    y=0;
+    thold=0.5;
+    printBlock(block, x, y);
+    gettimeofday(&start_time, NULL);
+    pre_time = start_time;
+
+    for(y=0; y<HEIGHT ; )
     {
+        prex = x;
+        prey = y;
+
         if(kbhit())
         {
             clearBlock(block, x, y);
@@ -226,7 +238,18 @@ int main(int argc, char *argv[])
                 reset();
                 exit(1);
             }
-            count++;
+        }
+        gettimeofday(&now_time, NULL);
+        duration = now_time.tv_sec - pre_time.tv_sec
+            + (now_time.tv_usec - pre_time.tv_usec)/1000000.0;
+        if (duration > thold)
+        {
+            pre_time = now_time;
+            y++;
+        }
+        if (prex != x || prey != y)
+        {
+            clearBlock(block, prex, prey);
             printBlock(block, x ,y);
         }
     }
