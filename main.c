@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <stdlib.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <errno.h>
+#include <termios.h>
+#include <unistd.h>
+
 #define clearScreen() printf("\033[2J")
 #define setPosition(x,y) printf("\033[%d;%dH",(y)+1, (x)*2+1)  //adjustment for indexing
 #define cursolOn() printf("\033[?25h")  // displays the cursor
@@ -160,7 +167,11 @@ Cell block_type[BLOCK_NUM][BLOCK_SIZE][BLOCK_SIZE] = {
   '\0', WHITE, BLACK, NORMAL,
 };
 
-int wait(int msec);
+
+extern int errno;
+struct termios otty,ntty;
+
+int wait_(int msec);
 void initialize(void);
 void reset(void);
 int checkRange(Cell a, int x, int y);
@@ -170,25 +181,59 @@ void copyBlock(Cell src[BLOCK_SIZE][BLOCK_SIZE], Cell dst[BLOCK_SIZE][BLOCK_SIZE
 int printBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
 int clearBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y);
 
+int kbhit(void);
+int getch(void);
+int tinit(void);
+
+
 int main(int argc, char *argv[])
 {
-    int i;
-    Cell block[BLOCK_SIZE][BLOCK_SIZE];
-    copyBlock(block_type[1], block);
+    int x,y,c,count;
+    Cell block[BLOCK_SIZE][BLOCK_SIZE]; copyBlock(block_type[1],block);
     initialize();
-
-    for (i=0; i<HEIGHT; i++)
+    x=5;
+    y=10;
+    printBlock(block,x,y); //初期表示
+    for( count=0; count<10 ; ) //とりあえず 10 操作したら終了
     {
-        printBlock(block, 5, i);
-        wait(250);
-        clearBlock(block, 5, i);
-
+        if(kbhit())
+        {
+            clearBlock(block, x, y);
+            c = getch();
+            if(c==0x1b)
+            {
+                c = getch();
+                if(c==0x5b)
+                {
+                    c = getch();
+                    switch(c)
+                    {
+                        case 0x41:  //UP
+                            break;
+                        case 0x42:  //DOWN
+                            break;
+                        case 0x43:  //RIGHT
+                            x++;
+                            break;
+                        case 0x44:  //LEFT
+                            x--;
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                reset();
+                exit(1);
+            }
+            count++;
+            printBlock(block, x ,y);
+        }
     }
     reset();
 }
 
-
-int wait(int msec)
+int wait_(int msec)
 {
     struct timespec r = {0, msec * 1000L * 1000l};
     return nanosleep( &r, NULL);
@@ -196,6 +241,7 @@ int wait(int msec)
 
 void initialize(void)
 {
+    tinit();
     setAttribute(NORMAL);
     setBackColor(BLACK);
     setCharColor(WHITE);
@@ -210,6 +256,8 @@ void reset(void)
     setAttribute(NORMAL);
     clearScreen();
     cursolOn();
+    tcsetattr(1, TCSADRAIN, &otty);
+    write(1, "\n", 1);
 }
 
 int checkRange(Cell a, int x, int y)
@@ -271,4 +319,60 @@ int clearBlock(Cell block[BLOCK_SIZE][BLOCK_SIZE], int x, int y)
         for (i = 0; i < BLOCK_SIZE; i++)
             clearCell(block[j][i], i+x, j+y);
     return 0;
+}
+
+int kbhit(void)
+{
+  int ret;
+  fd_set rfd;
+  struct timeval timeout = {0,0};
+  FD_ZERO(&rfd);
+  FD_SET(0, &rfd);
+  ret = select(1, &rfd, NULL, NULL, &timeout);
+  if (ret == 1)
+    return 1;
+  else
+    return 0;
+}
+
+int getch(void)
+{
+  unsigned char c;
+  int n;
+  while ((n = read(0, &c, 1)) < 0 && errno == EINTR) ;
+  if (n == 0)
+    return -1;
+  else
+    return (int)c;
+}
+
+static void onsignal(int sig)
+{
+  signal(sig, SIG_IGN);
+  switch(sig){
+    case SIGINT:
+    case SIGQUIT:
+    case SIGTERM:
+    case SIGHUP:
+     exit(1);
+     break;
+  }
+}
+
+int tinit(void)
+{
+  if (tcgetattr(1, &otty) < 0)
+    return -1;
+  ntty = otty;
+  ntty.c_iflag &= ~(INLCR|ICRNL|IXON|IXOFF|ISTRIP);
+  ntty.c_oflag &= ~OPOST;
+  ntty.c_lflag &= ~(ICANON|ECHO);
+  ntty.c_cc[VMIN] = 1;
+  ntty.c_cc[VTIME] = 0;
+  tcsetattr(1, TCSADRAIN, &ntty);
+  signal(SIGINT, onsignal);
+  signal(SIGQUIT, onsignal);
+  signal(SIGTERM, onsignal);
+  signal(SIGHUP, onsignal);
+  return 0;
 }
